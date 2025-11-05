@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+backend/.venv/
+backend/badminton.db
+backend/tests/test.db
+.frontend-build/
+.DS_Store

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>羽毛球计分系统</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="app-header">
+        <h1>羽毛球计分系统</h1>
+        <div id="user-info" class="user-info"></div>
+      </header>
+      <main>
+        <section id="login-section" class="card">
+          <h2>登录</h2>
+          <form id="login-form" class="form-grid">
+            <label>
+              用户名
+              <input type="text" name="username" required placeholder="例如：admin" />
+            </label>
+            <label>
+              密码
+              <input type="password" name="password" required placeholder="请输入密码" />
+            </label>
+            <button type="submit" class="primary">登录</button>
+            <p class="hint">默认管理员账号：用户名 <strong>admin</strong> / 密码 <strong>admin123</strong></p>
+          </form>
+          <div id="login-error" class="error"></div>
+        </section>
+
+        <section id="app-section" class="hidden">
+          <nav class="tabs">
+            <button data-target="matches-view" class="tab active">比赛</button>
+            <button data-target="players-view" class="tab">选手</button>
+            <button data-target="settings-view" class="tab">设置</button>
+          </nav>
+
+          <section id="matches-view" class="tab-content">
+            <div class="toolbar">
+              <div class="filters">
+                <label class="switch">
+                  <input type="checkbox" id="only-mine" />
+                  <span class="slider"></span>
+                </label>
+                <span>仅看我参与的比赛</span>
+              </div>
+              <button id="add-match-btn" class="primary hidden">新增比赛</button>
+            </div>
+            <div id="matches-list" class="list"></div>
+            <dialog id="match-dialog">
+              <article>
+                <h3 id="match-dialog-title"></h3>
+                <div id="match-dialog-body"></div>
+                <footer>
+                  <button id="close-match-dialog" class="secondary">关闭</button>
+                </footer>
+              </article>
+            </dialog>
+
+            <dialog id="match-form-dialog">
+              <article>
+                <h3>录入比赛</h3>
+                <form id="match-form" class="form-grid">
+                  <label>
+                    比赛时间
+                    <input type="datetime-local" name="played_at" required />
+                  </label>
+                  <label>
+                    第几场（可选）
+                    <input type="number" name="session_number" min="1" />
+                  </label>
+                  <label>
+                    对阵类型
+                    <select name="match_type" id="match-type" required>
+                      <option value="singles">1 vs 1 单打</option>
+                      <option value="doubles">2 vs 2 双打</option>
+                      <option value="one_vs_two">1 vs 2 车轮战</option>
+                    </select>
+                  </label>
+                  <div class="side-group">
+                    <h4>A 方选手</h4>
+                    <div id="side-a"></div>
+                  </div>
+                  <div class="side-group">
+                    <h4>B 方选手</h4>
+                    <div id="side-b"></div>
+                  </div>
+                  <label>
+                    A 方得分
+                    <input type="number" name="score_a" min="0" required />
+                  </label>
+                  <label>
+                    B 方得分
+                    <input type="number" name="score_b" min="0" required />
+                  </label>
+                  <label>
+                    备注
+                    <textarea name="notes" rows="2" placeholder="可填写比赛说明"></textarea>
+                  </label>
+                  <button type="submit" class="primary">提交</button>
+                </form>
+                <footer>
+                  <button id="close-match-form" class="secondary">取消</button>
+                </footer>
+              </article>
+            </dialog>
+          </section>
+
+          <section id="players-view" class="tab-content hidden">
+            <div class="players-layout">
+              <div class="card">
+                <h3>胜率排行榜</h3>
+                <table id="rankings-table">
+                  <thead>
+                    <tr>
+                      <th>选手</th>
+                      <th>胜率</th>
+                      <th>战绩</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="card" id="player-detail-card">
+                <h3>选手详情</h3>
+                <div id="player-detail">请选择左侧的选手查看详情</div>
+              </div>
+            </div>
+          </section>
+
+          <section id="settings-view" class="tab-content hidden">
+            <div class="card">
+              <h3>我的信息</h3>
+              <div id="profile"></div>
+              <div class="button-group">
+                <button id="export-my-matches" class="secondary">导出我的比赛</button>
+                <button id="export-my-summary" class="secondary">导出我的统计</button>
+              </div>
+            </div>
+
+            <div class="card hidden" id="admin-panel">
+              <h3>新增用户（仅管理员）</h3>
+              <form id="create-user-form" class="form-grid">
+                <label>
+                  用户名
+                  <input type="text" name="username" required />
+                </label>
+                <label>
+                  姓名
+                  <input type="text" name="full_name" required />
+                </label>
+                <label>
+                  性别
+                  <select name="gender" required>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                    <option value="other">其他</option>
+                  </select>
+                </label>
+                <label>
+                  密码
+                  <input type="password" name="password" required minlength="6" />
+                </label>
+                <label class="checkbox">
+                  <input type="checkbox" name="can_record" />允许录入比赛
+                </label>
+                <label class="checkbox">
+                  <input type="checkbox" name="is_admin" />设为管理员
+                </label>
+                <button type="submit" class="primary">创建用户</button>
+              </form>
+            </div>
+
+            <div class="card hidden" id="root-panel">
+              <h3>根管理员操作</h3>
+              <button id="export-all" class="secondary">导出全部比赛</button>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
