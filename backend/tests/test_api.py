@@ -34,26 +34,44 @@ def get_token(client: TestClient, username: str, password: str) -> str:
 def test_login_and_list_matches():
     with TestClient(app) as client:
         token = get_token(client, "admin", "admin123")
+        auth_headers = {"Authorization": f"Bearer {token}"}
 
-        response = client.get("/api/matches/", headers={"Authorization": f"Bearer {token}"})
+        response = client.get("/api/matches/", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "matches" in data
-        assert len(data["matches"]) >= 5
+        assert len(data["matches"]) == 0
 
-        # Fetch users to use in match creation
-        users_resp = client.get("/api/users/", headers={"Authorization": f"Bearer {token}"})
-        assert users_resp.status_code == 200
-        users = users_resp.json()["users"]
-        alice_id = next(u["id"] for u in users if u["username"] == "alice")
-        bob_id = next(u["id"] for u in users if u["username"] == "bob")
+        players_to_create = [
+            {
+                "username": "test_player_a",
+                "full_name": "Test Player A",
+                "gender": "male",
+                "password": "playerpass123",
+                "can_record": False,
+            },
+            {
+                "username": "test_player_b",
+                "full_name": "Test Player B",
+                "gender": "female",
+                "password": "playerpass123",
+                "can_record": False,
+            },
+        ]
+
+        created_players = {}
+        for payload in players_to_create:
+            create_resp = client.post("/api/users/", json=payload, headers=auth_headers)
+            assert create_resp.status_code == 200, create_resp.text
+            created = create_resp.json()
+            created_players[created["username"]] = created["id"]
 
         payload = {
             "played_at": datetime.utcnow().isoformat(),
             "session_number": 5,
             "match_type": "singles",
-            "side_a_players": [alice_id],
-            "side_b_players": [bob_id],
+            "side_a_players": [created_players["test_player_a"]],
+            "side_b_players": [created_players["test_player_b"]],
             "score_a": 21,
             "score_b": 19,
             "notes": "Test singles match",
@@ -61,7 +79,7 @@ def test_login_and_list_matches():
         create_resp = client.post(
             "/api/matches/",
             json=payload,
-            headers={"Authorization": f"Bearer {token}"},
+            headers=auth_headers,
         )
         assert create_resp.status_code == 200, create_resp.text
         created = create_resp.json()
@@ -73,10 +91,10 @@ def test_login_and_list_matches():
         rankings_resp = client.get("/api/stats/rankings")
         assert rankings_resp.status_code == 200
         rankings = rankings_resp.json()
-        assert any(item["full_name"] == "Alice Chen" for item in rankings)
+        assert any(item["full_name"] == "Test Player A" for item in rankings)
 
         # Export endpoints should return excel content
-        export_resp = client.get("/api/exports/me/summary", headers={"Authorization": f"Bearer {token}"})
+        export_resp = client.get("/api/exports/me/summary", headers=auth_headers)
         assert export_resp.status_code == 200
         assert (
             export_resp.headers["content-type"].startswith(

@@ -2,7 +2,6 @@
 
 一个开箱即用的羽毛球比赛记录与统计系统，包含：
 
-- ✅ FastAPI + SQLite 的后端 API（内置管理员、4 个测试账号以及 5 场样例比赛）
 - ✅ 移动端优先的纯静态前端页面（无需构建，可直接放到 Nginx 静态目录）
 - ✅ Excel 导出、胜率排行榜、个人统计、日历标记、权限控制等功能
 - ✅ 完整部署指南与测试脚本
@@ -16,7 +15,7 @@ badminton-count/
 ├── backend/
 │   ├── app/
 │   │   ├── auth/                # 登录与 Token 逻辑
-│   │   ├── exports/             # Excel 导出服务
+- ✅ Excel 导出、胜率排行榜、个人统计、日历标记、权限控制等功能
 │   │   ├── matches/             # 比赛录入与查询
 │   │   ├── stats/               # 胜率、统计分析
 │   │   ├── users/               # 用户管理
@@ -49,6 +48,31 @@ badminton-count/
 > - `bcrypt==3.2.2`
 >
 > 若此前已安装旧版本依赖，请重新执行 `pip install -r requirements.txt` 以完成升级。
+>
+> 如果运行环境内置的 SQLite 版本低于 3.8.3（CentOS 7 常见），系统会自动关闭 SQLite 内置的正则函数以确保兼容；如需使用该函数，请升级 SQLite 至 3.8.3 及以上版本。
+>
+> **在 CentOS 7 上升级 SQLite 的示例步骤：**
+> 1. 安装编译工具：`sudo yum groupinstall "Development Tools"`。
+> 2. 下载并解压最新源码（以 3.46.0 为例）：  
+>    ```bash
+>    curl -LO https://www.sqlite.org/2024/sqlite-autoconf-3460000.tar.gz
+>    tar xzf sqlite-autoconf-3460000.tar.gz
+>    cd sqlite-autoconf-3460000
+>    ```
+> 3. 编译并安装到 `/usr/local/sqlite`：  
+>    ```bash
+>    ./configure --prefix=/usr/local/sqlite
+>    make -j$(nproc)
+>    sudo make install
+>    ```
+> 4. 更新环境变量（可写入 `~/.bashrc`）：  
+>    ```bash
+>    export PATH=/usr/local/sqlite/bin:$PATH
+>    export LD_LIBRARY_PATH=/usr/local/sqlite/lib:$LD_LIBRARY_PATH
+>    ```
+> 5. 确认版本：`sqlite3 --version` 应显示 3.8.3 以上。
+>
+> 如果虚拟环境中的 Python 在升级前已编译，请在加载新版本 SQLite 后重新创建虚拟环境并安装依赖，确保 `sqlite3` 模块使用最新动态库。
 
 ```bash
 cd backend
@@ -58,13 +82,10 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-首次启动会自动在 `backend/badminton.db` 中写入：
+首次启动会自动确保数据库写入管理员账号 dmin（同时拥有 root 权限），不会生成额外测试用户或比赛记录。
+**默认账号**：用户名 dmin，密码 dmin123。
 
-- 管理员账号 `admin`（同时拥有 root 权限）
-- 4 个测试选手账号：`alice`、`bob`、`carol`、`dave`
-- 5 条涵盖单打、双打、1v2 的样例比赛数据
 
-**默认密码**：所有测试账号密码均为 `password123`，管理员密码为 `admin123`。
 
 ### 2. 前端准备
 
@@ -75,11 +96,10 @@ uvicorn app.main:app --reload
 ### 3. 立即体验
 
 1. 访问 `http://localhost:8000` 时，FastAPI 会返回 JSON 提示。前端需要单独打开 `frontend/index.html`。
-2. 登录页面输入管理员账号 `admin` / `admin123` 即可进入系统。
 3. 体验以下功能：
-   - 切换「比赛」标签页查看样例数据、过滤“仅看我参与”。
+   - 切换「比赛」标签页查看当前记录（初次运行列表为空，可通过右上角按钮新增）。
    - 点击某场比赛卡片查看详细数据。
-   - 若拥有录入权限（管理员或选手 Alice/Bob），可点击右上角「新增比赛」进行录入。
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
    - 在「选手」标签页查看胜率排行榜、单击选手查看详细统计与打球日历。
    - 「设置」标签页可导出 Excel、查看个人信息；管理员可创建新用户，root 用户拥有导出全部比赛的按钮。
 
@@ -148,7 +168,7 @@ server {
 | 问题 | 解决方案 |
 | ---- | -------- |
 | 前端提示“登录已过期” | 检查浏览器是否能访问 `/api/health`，确认反向代理是否正确指向后端。 |
-| Excel 导出乱码 | Excel 文件采用 UTF-8 编码，使用新版 Office/金山文档可直接打开。 |
+- ✅ Excel 导出、胜率排行榜、个人统计、日历标记、权限控制等功能
 | 想清空数据 | 删除 `backend/badminton.db` 文件后重新启动服务即可重新生成初始数据。 |
 
 ---
@@ -160,9 +180,9 @@ server {
 | `/api/auth/token` | POST | 匿名 | 密码登录，返回 JWT Token |
 | `/api/users/me` | GET | 登录 | 获取当前用户信息 |
 | `/api/users/` | GET | 登录 | 获取所有注册用户列表 |
-| `/api/users/` | POST | 管理员 | 新增用户（可配置录入权限、管理员身份） |
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
 | `/api/matches/` | GET | 登录 | 获取比赛列表，可加 `only_mine=true` 查询本人参与的比赛 |
-| `/api/matches/` | POST | 具备录入权限 | 录入新的比赛成绩 |
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
 | `/api/stats/rankings` | GET | 登录 | 胜率排行榜 |
 | `/api/stats/players/{id}` | GET | 登录 | 某位选手的详细统计 |
 | `/api/exports/me/*` | GET | 登录 | 导出个人比赛/统计 Excel |
@@ -177,20 +197,17 @@ server {
 
 | 用户名 | 密码 | 角色 | 说明 |
 | ------ | ---- | ---- | ---- |
-| `admin` | `admin123` | root + 管理员 + 录入权限 | 可管理用户、导出所有比赛 |
-| `alice` | `password123` | 普通用户 + 录入权限 | 有比赛录入权限 |
-| `bob` | `password123` | 普通用户 + 录入权限 | 有比赛录入权限 |
-| `carol` | `password123` | 普通用户 | 仅查看数据 |
-| `dave` | `password123` | 普通用户 | 仅查看数据 |
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
 
-登录后可以使用设置页中的「新增用户」为同事添加账号，并勾选“允许录入比赛”来赋予录入权限。
+   - 若拥有录入权限，可先在「设置」页新增选手账号，再录入比赛。
 
 ---
 
 ## 六、更多提示
 
-- 修改默认密码：登录后可在数据库中手动更新，或通过管理员更新用户密码（`PATCH /api/users/{id}`）。
-- Excel 导出依赖 `openpyxl`，若部署环境较精简，请提前确认依赖已安装。
+- ✅ Excel 导出、胜率排行榜、个人统计、日历标记、权限控制等功能
 - 若希望自定义 Token 有效期或数据库位置，可通过设置环境变量：
   - `BADMINTON_SECRET_KEY`
   - `BADMINTON_ACCESS_TOKEN_EXPIRE`（单位：分钟）
