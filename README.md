@@ -81,6 +81,17 @@ source .venv/bin/activate  # Windows 使用 .venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+### 后台运行（可选）
+
+若需让服务在后台运行并记录日志，请在虚拟环境激活后执行：
+
+`ash
+nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+`
+
+- 该命令会将进程放到后台并忽略挂断信号，日志输出写入 uvicorn.log。
+- 使用 	ail -f uvicorn.log 查看实时日志，ps aux | grep uvicorn 查看进程，kill <PID> 可停止服务。
+
 
 首次启动会自动确保数据库写入管理员账号 dmin（同时拥有 root 权限），不会生成额外测试用户或比赛记录。
 **默认账号**：用户名 dmin，密码 dmin123。
@@ -124,9 +135,14 @@ pytest
 
 - 使用 `uvicorn` 或 `gunicorn` + `uvicorn.workers.UvicornWorker` 启动 FastAPI：
 
-  ```bash
+  
   uvicorn app.main:app --host 0.0.0.0 --port 8000
   ```
+  后台运行方法
+  ```bash
+  nohup uvicorn app.main:app --host 0.0.0.0 --port 8000 > uvicorn.log 2>&1 &
+  ```
+
 
 - 将 `frontend/` 目录复制到服务器的静态目录，例如 `/var/www/badminton-count/frontend`。
 - 使用 Nginx 作为前端与后端之间的反向代理。
