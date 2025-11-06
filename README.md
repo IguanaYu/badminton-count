@@ -43,6 +43,12 @@ badminton-count/
 ### 1. 后端准备
 
 > **环境要求**：Python 3.11+，无需安装数据库，项目默认使用 SQLite。
+> **Python 3.12+/3.13 兼容性说明**：如果在更高版本的 Python 上部署，请使用以下依赖版本（已在 `backend/requirements.txt` 固定）：
+> - `pydantic==1.10.24`
+> - `SQLAlchemy==2.0.44`
+> - `bcrypt==3.2.2`
+>
+> 若此前已安装旧版本依赖，请重新执行 `pip install -r requirements.txt` 以完成升级。
 
 ```bash
 cd backend
